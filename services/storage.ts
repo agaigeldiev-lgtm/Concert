@@ -1,141 +1,303 @@
 
-import { ConcertEvent, StaffDirectory, StaffRole, Employee } from '../types';
+import { createClient } from '@supabase/supabase-js';
+import { ConcertEvent, StaffDirectory, User, NotificationSettings, Vehicle, HelpdeskTicket, InventoryItem, InfoArticle, Reminder, GuestGuide, RentedEquipment, CabinetMetadata, Employee } from '../types';
 
-const EVENTS_KEY = 'concert_events_v1';
-const STAFF_KEY = 'concert_staff_v3'; 
+const SUPABASE_URL = 'https://tadxmuookehcjrkhylhx.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_rKXbr9RcP9EtQPXWSEtvYg_cnQLxGNw';
 
-const initialEmployees: Employee[] = [
-  { id: '1', name: 'Иванов Иван', roles: [StaffRole.ADMIN] },
-  { id: '2', name: 'Петров Петр', roles: [StaffRole.ADMIN, StaffRole.SOUND] },
-  { id: '3', name: 'Борисов Борис', roles: [StaffRole.SECURITY] },
-  { id: '4', name: 'Громов Григорий', roles: [StaffRole.SECURITY] },
-  { id: '5', name: 'Алексеев Алексей', roles: [StaffRole.SOUND, StaffRole.ELECTRIC] },
-  { id: '6', name: 'Дмитриев Дмитрий', roles: [StaffRole.SOUND, StaffRole.VIDEO] },
-  { id: '7', name: 'Светлов Сергей', roles: [StaffRole.LIGHT, StaffRole.VIDEO] },
-  { id: '8', name: 'Лучев Леонид', roles: [StaffRole.LIGHT] },
-  { id: '9', name: 'Экранный Эдуард', roles: [StaffRole.VIDEO] },
-  { id: '10', name: 'Камеров Кирилл', roles: [StaffRole.VIDEO] },
-  { id: '11', name: 'Вольтов Владимир', roles: [StaffRole.ELECTRIC] },
-  { id: '12', name: 'Токов Тимофей', roles: [StaffRole.ELECTRIC, StaffRole.SOUND] },
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const AUTH_KEY = 'concert_auth_v2';
+
+const DEFAULT_ROLES = [
+  'Администратор',
+  'Отв. за без-сть',
+  'Технический специалист',
+  'Звукорежиссер',
+  'Худ. по свету',
+  'Видеоинженер',
+  'Электрик',
+  'Дежурный'
 ];
 
-const initialVenues = [
-  'Stadium Live',
-  'Клуб Космос',
-  'ДК Железнодорожников',
-  'Главclub',
-  'Adrenaline Stadium'
-];
-
-const seedEvents: ConcertEvent[] = [
+const INITIAL_EMPLOYEES: Employee[] = [
   {
-    id: 'seed-1',
-    title: 'Рок-фестиваль "Прорыв"',
-    date: new Date().toISOString().split('T')[0],
-    arrivalTime: '10:00',
-    soundcheckTime: '12:00',
-    doorsTime: '18:00',
-    startTime: '19:00',
-    venue: 'Stadium Live',
-    notes: 'Проверить коммутацию бэклайна',
-    rider: 'Технический райдер: 4 монитора, 2 гитарных комбо, 1 басовый стек.',
-    isPaid: true,
-    staff: {
-      [StaffRole.ADMIN]: 'Иванов Иван',
-      [StaffRole.SECURITY]: 'Борисов Борис',
-      [StaffRole.SOUND]: 'Алексеев Алексей',
-      [StaffRole.LIGHT]: 'Светлов Сергей',
-      [StaffRole.VIDEO]: 'Экранный Эдуард',
-      [StaffRole.ELECTRIC]: 'Вольтов Владимир',
-      [StaffRole.DUTY]: 'Алексеев Алексей'
-    }
-  },
-  {
-    id: 'seed-2',
-    title: 'Благотворительный концерт "Свет"',
-    date: new Date().toISOString().split('T')[0],
-    arrivalTime: '14:00',
-    soundcheckTime: '15:30',
-    doorsTime: '17:30',
-    startTime: '18:00',
-    venue: 'Клуб Космос',
-    notes: 'Вход свободный для всех желающих',
-    rider: 'Стандартный клубный комплект звука и света.',
-    isPaid: false,
-    staff: {
-      [StaffRole.ADMIN]: 'Петров Петр',
-      [StaffRole.SECURITY]: 'Громов Григорий',
-      [StaffRole.SOUND]: 'Дмитриев Дмитрий',
-      [StaffRole.LIGHT]: 'Лучев Леонид',
-      [StaffRole.VIDEO]: 'Камеров Кирилл',
-      [StaffRole.ELECTRIC]: 'Токов Тимофей',
-      [StaffRole.DUTY]: 'Токов Тимофей'
-    }
-  },
-  {
-    id: 'seed-3',
-    title: 'Открытая репетиция ансамбля',
-    date: new Date().toISOString().split('T')[0],
-    arrivalTime: '09:00',
-    soundcheckTime: '10:00',
-    doorsTime: '11:30',
-    startTime: '12:00',
-    venue: 'ДК Железнодорожников',
-    notes: 'Бесплатный вход для студентов консерватории',
-    rider: 'Требуется только общее освещение и 2 микрофона для ведущего.',
-    isPaid: false,
-    staff: {
-      [StaffRole.ADMIN]: 'Иванов Иван',
-      [StaffRole.SECURITY]: 'Борисов Борис',
-      [StaffRole.SOUND]: 'Алексеев Алексей',
-      [StaffRole.LIGHT]: 'Светлов Сергей',
-      [StaffRole.VIDEO]: '',
-      [StaffRole.ELECTRIC]: 'Вольтов Владимир',
-      [StaffRole.DUTY]: 'Вольтов Владимир'
-    }
+    id: 'ruslan-tech-1',
+    name: 'Агайгельдиев Руслан Магометович',
+    phone: '89097705225',
+    roles: ['Технический специалист'],
+    department: 'Технический отдел'
   }
 ];
 
 export const storage = {
-  getEvents: (): ConcertEvent[] => {
-    const data = localStorage.getItem(EVENTS_KEY);
-    if (!data) {
-      storage.saveEvents(seedEvents);
-      return seedEvents;
-    }
-    return JSON.parse(data);
-  },
-  saveEvents: (events: ConcertEvent[]) => {
-    localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
-  },
-  addEvent: (event: ConcertEvent) => {
-    const events = storage.getEvents();
-    events.push(event);
-    storage.saveEvents(events);
-  },
-  updateEvent: (event: ConcertEvent) => {
-    const events = storage.getEvents();
-    const index = events.findIndex(e => e.id === event.id);
-    if (index !== -1) {
-      events[index] = event;
-      storage.saveEvents(events);
+  checkConnection: async (): Promise<{online: boolean, schemaOk: boolean, error?: string}> => {
+    try {
+      const { error } = await supabase.from('events').select('arrivalTime').limit(1);
+      if (error) return { online: false, schemaOk: false, error: error.message };
+      return { online: true, schemaOk: true };
+    } catch (err: any) {
+      return { online: false, schemaOk: false, error: err.message };
     }
   },
-  deleteEvent: (id: string) => {
-    const events = storage.getEvents();
-    const filtered = events.filter(e => e.id !== id);
-    storage.saveEvents(filtered);
-  },
-  getStaffDirectory: (): StaffDirectory => {
-    const data = localStorage.getItem(STAFF_KEY);
-    if (!data) {
-      const dir = { employees: initialEmployees, venues: initialVenues };
-      storage.saveStaffDirectory(dir);
-      return dir;
+
+  getEvents: async (): Promise<ConcertEvent[]> => {
+    try {
+      const { data, error } = await supabase.from('events').select('id, title, date, arrivalTime, soundcheckTime, doorsTime, startTime, staff, notes, rider, venue, isPaid').order('date', { ascending: true });
+      if (error) return [];
+      return data || [];
+    } catch (e) {
+      return [];
     }
-    return JSON.parse(data);
   },
-  saveStaffDirectory: (dir: StaffDirectory) => {
-    localStorage.setItem(STAFF_KEY, JSON.stringify(dir));
+
+  addEvent: async (event: ConcertEvent) => {
+    const { rentedEquipment, isCancelled, ...cleanEvent } = event;
+    const { error } = await supabase.from('events').insert([cleanEvent]);
+    if (error) throw error;
+  },
+
+  updateEvent: async (event: ConcertEvent) => {
+    const { rentedEquipment, isCancelled, ...cleanEvent } = event;
+    const { error } = await supabase.from('events').update(cleanEvent).eq('id', event.id);
+    if (error) throw error;
+  },
+
+  deleteEvent: async (id: string) => {
+    const { error } = await supabase.from('events').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  },
+
+  getCancelledEventsRegistry: async (): Promise<Record<string, boolean>> => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('content').eq('type', 'event_status_v1');
+      if (error || !data || data.length === 0) return {};
+      return data[0].content as Record<string, boolean>;
+    } catch (e) {
+      return {};
+    }
+  },
+
+  saveCancelledEventsRegistry: async (registry: Record<string, boolean>) => {
+    const { error } = await supabase.from('app_settings').upsert({ type: 'event_status_v1', content: registry }, { onConflict: 'type' });
+    if (error) throw error;
+  },
+
+  getRentalsRegistry: async (): Promise<Record<string, RentedEquipment[]>> => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('content').eq('type', 'rentals_registry_v1');
+      if (error || !data || data.length === 0) return {};
+      return data[0].content as Record<string, RentedEquipment[]>;
+    } catch (e) {
+      return {};
+    }
+  },
+
+  saveRentalsRegistry: async (registry: Record<string, RentedEquipment[]>) => {
+    const { error } = await supabase.from('app_settings').upsert({ type: 'rentals_registry_v1', content: registry }, { onConflict: 'type' });
+    if (error) throw error;
+  },
+
+  getStaffDirectory: async (): Promise<StaffDirectory> => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('content').eq('type', 'directory');
+      let content: StaffDirectory;
+      
+      if (error || !data || data.length === 0) {
+        content = { employees: INITIAL_EMPLOYEES, venues: [], roles: DEFAULT_ROLES, departments: [], cabinets: [], phoneRecords: [], equipmentCatalog: [], birthdays: [] };
+      } else {
+        content = data[0].content as StaffDirectory;
+      }
+
+      // Гарантируем наличие Руслана в списке сотрудников
+      if (!content.employees.find(e => e.phone === '89097705225' || e.name.includes('Агайгельдиев'))) {
+        content.employees.push(INITIAL_EMPLOYEES[0]);
+      }
+      
+      // Гарантируем наличие роли Технический специалист
+      if (!content.roles.includes('Технический специалист')) {
+        content.roles.splice(2, 0, 'Технический специалист');
+      }
+
+      if (!content.departments) content.departments = [];
+      if (!content.cabinets) content.cabinets = [];
+      if (!content.phoneRecords) content.phoneRecords = [];
+      if (!content.equipmentCatalog) content.equipmentCatalog = [];
+      if (!content.birthdays) content.birthdays = [];
+      
+      return content;
+    } catch (e) {
+      return { employees: INITIAL_EMPLOYEES, venues: [], roles: DEFAULT_ROLES, departments: [], cabinets: [], phoneRecords: [], equipmentCatalog: [], birthdays: [] };
+    }
+  },
+
+  saveStaffDirectory: async (dir: StaffDirectory) => {
+    const { error } = await supabase.from('app_settings').upsert({ type: 'directory', content: dir }, { onConflict: 'type' });
+    if (error) throw error;
+  },
+
+  getCabinetMetadata: async (): Promise<Record<string, CabinetMetadata>> => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('content').eq('type', 'cabinet_metadata_v1');
+      if (error || !data || data.length === 0) return {};
+      return data[0].content as Record<string, CabinetMetadata>;
+    } catch (e) {
+      return {};
+    }
+  },
+
+  saveCabinetMetadata: async (metadata: Record<string, CabinetMetadata>) => {
+    const { error } = await supabase.from('app_settings').upsert({ type: 'cabinet_metadata_v1', content: metadata }, { onConflict: 'type' });
+    if (error) throw error;
+  },
+
+  getGuestGuides: async (): Promise<GuestGuide[]> => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('content').eq('type', 'guest_guides_v1');
+      if (error || !data || data.length === 0) return [];
+      return data[0].content as GuestGuide[];
+    } catch (e) {
+      return [];
+    }
+  },
+
+  saveGuestGuides: async (guides: GuestGuide[]) => {
+    const { error } = await supabase.from('app_settings').upsert({ type: 'guest_guides_v1', content: guides }, { onConflict: 'type' });
+    if (error) throw error;
+  },
+
+  getReminders: async (): Promise<Reminder[]> => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('content').eq('type', 'reminders_v1');
+      if (error || !data || data.length === 0) return [];
+      return data[0].content as Reminder[];
+    } catch (e) {
+      return [];
+    }
+  },
+
+  saveReminders: async (reminders: Reminder[]) => {
+    const { error } = await supabase.from('app_settings').upsert({ type: 'reminders_v1', content: reminders }, { onConflict: 'type' });
+    if (error) throw error;
+  },
+
+  getParkingList: async (): Promise<Vehicle[]> => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('content').eq('type', 'parking_list');
+      if (error || !data || data.length === 0) return [];
+      return data[0].content as Vehicle[];
+    } catch (e) {
+      return [];
+    }
+  },
+
+  saveParkingList: async (list: Vehicle[]) => {
+    const { error } = await supabase.from('app_settings').upsert({ type: 'parking_list', content: list }, { onConflict: 'type' });
+    if (error) throw error;
+  },
+
+  getHelpdeskTickets: async (): Promise<HelpdeskTicket[]> => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('content').eq('type', 'helpdesk_tickets');
+      if (error || !data || data.length === 0) return [];
+      return data[0].content as HelpdeskTicket[];
+    } catch (e) {
+      return [];
+    }
+  },
+
+  saveHelpdeskTickets: async (tickets: HelpdeskTicket[]) => {
+    const { error } = await supabase.from('app_settings').upsert({ type: 'helpdesk_tickets', content: tickets }, { onConflict: 'type' });
+    if (error) throw error;
+  },
+
+  getInventoryItems: async (): Promise<InventoryItem[]> => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('content').eq('type', 'inventory_v1');
+      if (error || !data || data.length === 0) return [];
+      return data[0].content as InventoryItem[];
+    } catch (e) {
+      return [];
+    }
+  },
+
+  saveInventoryItems: async (items: InventoryItem[]) => {
+    const { error } = await supabase.from('app_settings').upsert({ type: 'inventory_v1', content: items }, { onConflict: 'type' });
+    if (error) throw error;
+  },
+
+  getInfoArticles: async (): Promise<InfoArticle[]> => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('content').eq('type', 'knowledge_base_v1');
+      if (error || !data || data.length === 0) return [];
+      return data[0].content as InfoArticle[];
+    } catch (e) {
+      return [];
+    }
+  },
+
+  saveInfoArticles: async (articles: InfoArticle[]) => {
+    const { error } = await supabase.from('app_settings').upsert({ type: 'knowledge_base_v1', content: articles }, { onConflict: 'type' });
+    if (error) throw error;
+  },
+
+  getNotificationSettings: async (): Promise<NotificationSettings> => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('content').eq('type', 'notification_config');
+      if (error || !data || data.length === 0) return { enabled: false, botToken: '', chatId: '' };
+      return data[0].content;
+    } catch (e) {
+      return { enabled: false, botToken: '', chatId: '' };
+    }
+  },
+
+  saveNotificationSettings: async (settings: NotificationSettings) => {
+    const { error } = await supabase.from('app_settings').upsert({ type: 'notification_config', content: settings }, { onConflict: 'type' });
+    if (error) throw error;
+  },
+
+  getUserRegistry: async (): Promise<User[]> => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('content').eq('type', 'users_registry_v2');
+      if (error || !data || data.length === 0) {
+        return [{ id: '1', login: 'admin', username: 'Администратор', password: 'admin1234', roles: ['admin'], isActive: true, createdAt: new Date().toISOString() }];
+      }
+      // Гарантируем, что у каждого пользователя есть массив ролей
+      const users = (data[0].content as User[]).map(u => ({
+        ...u,
+        roles: Array.isArray(u.roles) ? u.roles : []
+      }));
+      return users;
+    } catch (e) {
+      return [{ id: '1', login: 'admin', username: 'Администратор', password: 'admin1234', roles: ['admin'], isActive: true, createdAt: new Date().toISOString() }];
+    }
+  },
+
+  saveUserRegistry: async (users: User[]) => {
+    const { error } = await supabase.from('app_settings').upsert({ type: 'users_registry_v2', content: users }, { onConflict: 'type' });
+    if (error) throw error;
+  },
+
+  getAuth: (): User | null => {
+    try {
+      const data = localStorage.getItem(AUTH_KEY);
+      if (!data) return null;
+      const user = JSON.parse(data);
+      if (user && !Array.isArray(user.roles)) user.roles = [];
+      return user;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  saveAuth: (user: User | null) => {
+    if (user) {
+      const sanitized = { ...user };
+      delete sanitized.password;
+      if (!Array.isArray(sanitized.roles)) sanitized.roles = [];
+      localStorage.setItem(AUTH_KEY, JSON.stringify(sanitized));
+    }
+    else localStorage.removeItem(AUTH_KEY);
   }
 };

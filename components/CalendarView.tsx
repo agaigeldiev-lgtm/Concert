@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ConcertEvent } from '../types';
-import { ChevronLeft, ChevronRight, ClockIcon } from './Icons';
+import { ChevronLeft, ChevronRight, MusicIcon } from './Icons';
 
 interface CalendarViewProps {
   events: ConcertEvent[];
@@ -33,43 +33,71 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   for (let i = 1; i <= endOfMonth.getDate(); i++) {
     days.push(new Date(currentDate.getFullYear(), currentDate.getMonth(), i));
   }
-  while (days.length < 42) days.push(null);
+  
+  const totalCells = days.length > 35 ? 42 : 35;
+  while (days.length < totalCells) days.push(null);
+
+  const formatLocalDate = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
 
   const getEventsForDay = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatLocalDate(date);
     return events.filter(e => e.date === dateStr);
   };
 
-  const monthName = currentDate.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+  const monthName = currentDate.toLocaleString('ru-RU', { month: 'long' });
+  const yearName = currentDate.getFullYear();
 
   return (
-    <div className="overflow-hidden">
-      <div className="p-8 flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 capitalize tracking-tight">{monthName}</h2>
-          <p className="text-sm font-medium text-slate-400 mt-1">График загрузки площадок</p>
+    <div className="flex flex-col h-full bg-white dark:bg-slate-900 transition-colors">
+      {/* Хедер календаря */}
+      <div className="p-6 flex items-center justify-between no-print border-b border-slate-100 dark:border-slate-800">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-3">
+             <h2 className="text-3xl font-bold text-slate-900 dark:text-white capitalize tracking-tight">{monthName}</h2>
+             <span className="text-xl font-medium text-slate-300 dark:text-slate-700">{yearName}</span>
+          </div>
+          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">График мероприятий дворца</p>
         </div>
-        <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl">
-          <button onClick={onPrevMonth} className="p-2.5 hover:bg-white hover:shadow-sm text-slate-500 hover:text-indigo-600 rounded-xl transition-all">
+        
+        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <button 
+            onClick={onPrevMonth} 
+            className="p-2 hover:bg-white dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-600 transition-all rounded-lg"
+          >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <button onClick={onNextMonth} className="p-2.5 hover:bg-white hover:shadow-sm text-slate-500 hover:text-indigo-600 rounded-xl transition-all">
+          <div className="w-px h-4 bg-slate-200 dark:bg-slate-700"></div>
+          <button 
+            onClick={onNextMonth} 
+            className="p-2 hover:bg-white dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-600 transition-all rounded-lg"
+          >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 border-y border-slate-100">
+      {/* Сетка названий дней */}
+      <div className="grid grid-cols-7 bg-slate-50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
         {daysOfWeek.map((day, idx) => (
-          <div key={day} className={`py-4 text-center text-[10px] font-black uppercase tracking-[0.2em] ${idx >= 5 ? 'text-rose-500 bg-rose-50/20' : 'text-slate-400'}`}>
+          <div key={day} className={`py-3 text-center text-[10px] font-bold uppercase tracking-widest ${idx >= 5 ? 'text-rose-500' : 'text-slate-400'}`}>
             {day}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 auto-rows-fr">
+      {/* Основная сетка дат - gap-px создает тонкие линии разметки */}
+      <div className="flex-1 grid grid-cols-7 gap-px bg-slate-100 dark:bg-slate-800 overflow-y-auto custom-scrollbar border-b border-slate-100 dark:border-slate-800">
         {days.map((date, idx) => {
-          if (!date) return <div key={`pad-${idx}`} className="border-r border-b border-slate-50 bg-slate-50/30 h-32" />;
+          if (!date) {
+            return (
+              <div key={`pad-${idx}`} className="bg-slate-50/50 dark:bg-slate-900/40 min-h-[180px]" />
+            );
+          }
           
           const dayEvents = getEventsForDay(date);
           const isToday = new Date().toDateString() === date.toDateString();
@@ -77,46 +105,91 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
           return (
             <div 
-              key={date.toISOString()} 
+              key={date.getTime()} 
               onClick={() => onDayClick(date)}
-              className={`border-r border-b border-slate-100 p-3 min-h-[140px] transition-all cursor-pointer group flex flex-col relative ${isWeekend ? 'bg-slate-50/30' : 'bg-white'} hover:bg-indigo-50/40`}
+              className={`
+                relative flex flex-col p-3 transition-all cursor-pointer group min-h-[180px]
+                ${isToday 
+                  ? 'bg-indigo-50/30 dark:bg-indigo-950/20 z-10 ring-1 ring-inset ring-indigo-500' 
+                  : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                }
+              `}
             >
-              <div className="flex justify-between items-start mb-3">
-                <span className={`text-sm font-bold w-8 h-8 flex items-center justify-center rounded-xl transition-all ${
-                  isToday ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-400 group-hover:text-indigo-600'
-                }`}>
+              {/* Число */}
+              <div className="flex justify-between items-center mb-3">
+                <span className={`
+                  text-base font-bold tabular-nums w-8 h-8 flex items-center justify-center rounded-lg transition-all
+                  ${isToday 
+                    ? 'bg-indigo-600 text-white shadow-md' 
+                    : isWeekend ? 'text-rose-500' : 'text-slate-400 dark:text-slate-600 group-hover:text-indigo-600'
+                  }
+                `}>
                   {date.getDate()}
                 </span>
+                
                 {dayEvents.length > 0 && (
-                  <div className="flex -space-x-1">
+                  <div className="flex -space-x-1 no-print">
                      {dayEvents.slice(0, 3).map(e => (
-                       <div key={e.id} className={`w-2 h-2 rounded-full border border-white ring-1 ${e.isPaid ? 'bg-emerald-500 ring-emerald-100' : 'bg-rose-500 ring-rose-100'}`}></div>
+                       <div 
+                        key={e.id} 
+                        className={`w-2 h-2 rounded-full border border-white dark:border-slate-900 ${
+                          e.isCancelled ? 'bg-slate-400' : (e.isPaid ? 'bg-emerald-500' : 'bg-rose-500')
+                        }`} 
+                       />
                      ))}
                   </div>
                 )}
               </div>
               
-              <div className="flex-1 space-y-1.5">
-                {dayEvents.slice(0, 3).map(event => (
-                  <div key={event.id} onClick={(e) => { e.stopPropagation(); onEventClick(event); }} className={`p-1.5 text-[9px] font-bold border rounded-lg truncate transition-all ${
-                    event.isPaid ? 'bg-emerald-50/50 border-emerald-100 text-emerald-700' : 'bg-rose-50/50 border-rose-100 text-rose-700'
-                  } hover:scale-[1.02] hover:shadow-sm`}>
-                    {event.startTime} • {event.title}
+              {/* Список событий */}
+              <div className="flex-1 space-y-1 overflow-y-auto no-scrollbar">
+                {dayEvents.map(event => (
+                  <div 
+                    key={event.id} 
+                    onClick={(e) => { e.stopPropagation(); onEventClick(event); }} 
+                    className={`
+                      group/ev relative p-2 rounded-lg border transition-all
+                      ${event.isCancelled 
+                        ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-400 line-through' 
+                        : (event.isPaid 
+                            ? 'bg-emerald-50/40 dark:bg-emerald-500/5 border-emerald-100/50 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300' 
+                            : 'bg-rose-50/40 dark:bg-rose-500/5 border-rose-100/50 dark:border-rose-500/20 text-rose-800 dark:text-rose-300')
+                      }
+                      hover:shadow-sm
+                    `}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1.5 ${event.isPaid ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold opacity-60 tabular-nums text-[9px] leading-none mb-1">{event.startTime}</span>
+                        <span className="text-[11px] font-medium leading-snug whitespace-normal break-words">{event.title}</span>
+                        {event.venue && (
+                            <span className="text-[8px] font-medium opacity-40 uppercase tracking-tighter mt-0.5 truncate">{event.venue}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
-                {dayEvents.length > 3 && (
-                  <div className="text-[8px] font-black text-slate-300 uppercase pl-1"> еще {dayEvents.length - 3}... </div>
-                )}
-              </div>
-              
-              <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                 <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100">
-                    <svg className="w-3 h-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path></svg>
-                 </div>
               </div>
             </div>
           );
         })}
+      </div>
+
+      {/* Легенда */}
+      <div className="px-6 py-3 flex items-center gap-6 no-print shrink-0 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
+         <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Платные</span>
+         </div>
+         <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Бюджет</span>
+         </div>
+         <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Отмена</span>
+         </div>
       </div>
     </div>
   );
